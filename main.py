@@ -237,6 +237,7 @@ if __name__ == "__main__":
             print('Start in new minute:' + getTime())
             start_peroid_time = int(round(time.time() * 1000))
             readSensor_minute = getTime()
+            data_report.clear()
             data_report['Time'] = readSensor_minute
 
             # Read sensor in Interval/2
