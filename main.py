@@ -7,6 +7,7 @@ import argparse
 import board
 from datetime import datetime
 
+from sim import sim
 from sensor import ze12
 from sensor import ze15
 from sensor import ze25
@@ -25,6 +26,8 @@ parser.add_argument('-co2',     help='Use CO2.      Jump V-Tx-Rx-G:17-7-29-30', 
 parser.add_argument('-co',      help='Use CO.       Jump V-Tx-Rx-G:2-24-21-20', action='store_true')
 parser.add_argument('-o3',      help='Use O3.       Jump V-Tx-Rx-G:2-32-33-34', action='store_true')
 parser.add_argument('-http',    help='Enable post data to Server via HTTP', action='store_true')
+parser.add_argument('-wifi',    help='Enable post data to Server via WiFi. Default = False', action='store_true')
+parser.add_argument('-sim',    help='Enable post data to Server via SIM 4G. Default = False', action='store_true')
 parser.add_argument('-d', '--debug', help='enable/disable Debug', action='store_true')
 parser.add_argument('-t', '--time', help='measuring time (h)' , type=int, default=1)
 parser.add_argument('-i', '--interval', help='measuring interval time (min)' , type=int, default=1)
@@ -33,6 +36,8 @@ option = parser.parse_args()
 
 UseAll = option.all
 UseHTTP = option.http or UseAll
+UseWiFi = option.wifi or UseAll
+UseSim = option.sim or UseAll
 UseDHT = option.dht or UseAll
 UseCO2 = option.co2 or UseAll
 UseSO2 = option.so2 or UseAll
@@ -56,6 +61,9 @@ URL = 'http://45.77.243.33:8080/api/v1/iaTF9JJ7sZOsBSTEimmG/telemetry'
 ContentType = 'application/json'
 HTTP_CONNECT_TIMEOUT = 20   #s
 HTTP_RESPONSE_TIMEOUT = 5   #s
+
+SIM_SERIAL_PORT = '/dev/ttyUSB0'
+SIM_SERIAL_BAUD = 115200
 
 # Config Sensors
 CO2 = wv20.sensor()
@@ -155,12 +163,12 @@ def wifi_http_post(url, contentType, json_data, connTimeout, recvTimeout):
     return False
 
 def http_post(url, contentType, json_data, connTimeout, recvTimeout):
-    if not wifi_http_post(url, contentType, json_data, connTimeout, recvTimeout):
-        if Debug: print('WiFi: Send data to Server error.')
-        # if not sim.http_post(url, contentType, json_data, connTimeout, recvTimeout):
-        #     if Debug: print('Error: Send via Sim error.')
-        return False
-    return True
+    ok = False
+    if UseWiFi:
+        ok = wifi_http_post(url, contentType, json_data, connTimeout, recvTimeout)
+    if UseSim and not ok:
+        ok = sim.http_post(url, contentType, json_data, '', connTimeout, recvTimeout)
+    return ok
 
 # ----------------- write file funcs ------------------------
 # 
@@ -173,6 +181,13 @@ def getTime():
 # ----------------- Main ------------------------
 # 
 if __name__ == "__main__":
+    if UseSim:
+        # init SIM
+        ok = sim.at_init(SIM_SERIAL_PORT, SIM_SERIAL_BAUD, debugMode=False)
+        if not ok:
+            print('SIM AT init error')
+            sys.exit(1)
+
     if UseSO2:
         ok = SO2.initSensor(PORT_SO2, SensorReadMode)
         if not ok:
