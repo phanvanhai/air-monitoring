@@ -64,6 +64,7 @@ HTTP_RESPONSE_TIMEOUT = 5   #s
 
 SIM_SERIAL_PORT = '/dev/ttyUSB0'
 SIM_SERIAL_BAUD = 115200
+POWER_KEY = 6
 
 # Config Sensors
 CO2 = wv20.sensor()
@@ -183,11 +184,22 @@ def getTime():
 if __name__ == "__main__":
     if UseSim:
         # init SIM
+        sim.power_on(POWER_KEY)
         ok = sim.at_init(SIM_SERIAL_PORT, SIM_SERIAL_BAUD, debugMode=False)
         if not ok:
             print('SIM AT init error')
             sys.exit(1)
+        sim.gps_start()
 
+        # wait until GPS is ready
+        print('wait until GPS is ready...')
+        while True:
+            time.sleep(2)
+            _, ok = sim.gps_get_data()
+            if ok:
+                print('GPS is ready')
+                break
+            
     if UseSO2:
         ok = SO2.initSensor(PORT_SO2, SensorReadMode)
         if not ok:
@@ -335,6 +347,10 @@ if __name__ == "__main__":
                 if sleep_time > 0:
                     time.sleep(sleep_time/1000.0)
             
+            # Get GPS
+            if UseSim:
+                gps, _ = sim.gps_get_data()
+                data_report['GPS'] = gps
             # Encode the data of sensors to JSON format
             data_report_json = json.dumps(data_report)
             # Sending data to Server
@@ -375,5 +391,9 @@ if __name__ == "__main__":
     if UseDHT:
         DHT.closeSensor()
         del DHT
+    if UseSim:
+        sim.gps_stop()
+        sim.at_close()
+        sim.power_down(POWER_KEY)
     sys.exit(0)
     

@@ -29,7 +29,7 @@ def power_down(power_key):
         GPIO.output(power_key,GPIO.HIGH)
         time.sleep(3)
         GPIO.output(power_key,GPIO.LOW)
-        time.sleep(18)
+        time.sleep(18)               
     print('SIM7600X off')
 
 ser = None
@@ -213,14 +213,17 @@ def gps_start():
 # Get GPS info
 def gps_get_data():    
     r, ok = _at_send('AT+CGPSINFO', 'OK', 1)
-    if not ok or r == '':
-        _at_send('AT+CGPS=0', '+CGPS:0', 1)
+    if not ok or r == '':        
         return "", False
-    if ',,,' in r:
-        _at_send('AT+CGPS=0', '+CGPS:0', 1)
+    if ',,,' in r:        
+        return "", False  
+    
+    # get GPS data from response
+    try:
+        data = r.splitlines()[1]    
+        data = data.split(" ")[1]
+    except:
         return "", False
-    data = r.splitlines()[2]
-    data = data.split(" ")[1]
     
     return data, True
 
