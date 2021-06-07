@@ -14,12 +14,13 @@ from sensor import ze25
 from sensor import zh03b
 from sensor import wv20
 from sensor import dht
+from sht20 import SHT20
 
 startTime = datetime.now().strftime("%Y%m%d%H%M")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-all',     help='Use all sensor and http', action='store_true')
-parser.add_argument('-dht',     help='Use DHT.      Jump Vcc-P-Gnd:1-12-9', action='store_true')
+parser.add_argument('-ht',     help='Use DHT.      Jump Vcc-P-Gnd:1-12-9', action='store_true')
 parser.add_argument('-pm25',    help='Use PM2.5.    Jump V-Tx-Rx-G:2-8-10-14', action='store_true')
 parser.add_argument('-so2',     help='Use SO2.      Jump V-Tx-Rx-G:2-27-28-25', action='store_true')
 parser.add_argument('-co2',     help='Use CO2.      Jump V-Tx-Rx-G:17-7-29-30', action='store_true')
@@ -35,10 +36,10 @@ parser.add_argument('-i', '--interval', help='measuring interval time (min)' , t
 option = parser.parse_args()
 
 UseAll = option.all
-UseHTTP = option.http or UseAll
+UseHTTP = option.http or UseAll or option.wifi
 UseWiFi = option.wifi or UseAll
 UseSim = option.sim or UseAll
-UseDHT = option.dht or UseAll
+UseHT = option.ht or UseAll
 UseCO2 = option.co2 or UseAll
 UseSO2 = option.so2 or UseAll
 UseCO = option.co or UseAll
@@ -73,6 +74,7 @@ CO = ze15.sensor()
 O3 = ze25.sensor()
 PM2_5 = zh03b.sensor()
 DHT = dht.sensor()
+sht = SHT20(1, resolution=SHT20.TEMP_RES_14bit)
 
 DHT_PIN = board.D18
 PORT_PM2_5 = '/dev/ttyAMA0'
@@ -92,7 +94,7 @@ if UseO3 and O3.ACTIVE_UPLOAD_INTERVAL > SENSOR_READ_INTERVAL:
     SENSOR_READ_INTERVAL = O3.ACTIVE_UPLOAD_INTERVAL
 if UsePM25 and PM2_5.ACTIVE_UPLOAD_INTERVAL > SENSOR_READ_INTERVAL:
     SENSOR_READ_INTERVAL = PM2_5.ACTIVE_UPLOAD_INTERVAL
-if UseDHT and DHT.ACTIVE_UPLOAD_INTERVAL > SENSOR_READ_INTERVAL:
+if UseHT and DHT.ACTIVE_UPLOAD_INTERVAL > SENSOR_READ_INTERVAL:
     SENSOR_READ_INTERVAL = DHT.ACTIVE_UPLOAD_INTERVAL
 
 # Global variables
@@ -107,7 +109,7 @@ data_report = {
     'SO2(ug/m3)': 0.0,
     'CO(ug/m3)': 0.0,
     'O3(ug/m3)': 0.0,
-    'CO2(ug/m3)': 0.0
+    'CO2(mg/m3)': 0.0
 }
 data_report_json = ''
 
@@ -129,7 +131,7 @@ def setReadAllSensorFalse(state):
     state['o3'] = False
 
 def checkReadAllSensorSuccess(state):
-    if UseDHT:
+    if UseHT:
         if state['dht'] != True:
             return False
     if UsePM25:
@@ -225,7 +227,7 @@ if __name__ == "__main__":
         if not ok:
             print('init CO2 error')
             sys.exit(-1)
-    if UseDHT:
+    if UseHT:
         ok = DHT.initSensor(DHT_PIN)
         if not ok:
             print('init DHT error')
@@ -233,7 +235,9 @@ if __name__ == "__main__":
     
     f_temp = open( folder + '/temp.txt', mode="w", encoding="utf-8")
     f_humi = open( folder + '/humi.txt', mode="w", encoding="utf-8")
+    f_pm1 = open( folder + '/pm1.txt', mode="w", encoding="utf-8")
     f_pm25 = open( folder + '/pm25.txt', mode="w", encoding="utf-8")
+    f_pm10 = open( folder + '/pm10.txt', mode="w", encoding="utf-8")
     f_so2 = open( folder + '/so2.txt', mode="w", encoding="utf-8")
     f_co2 = open( folder + '/co2.txt', mode="w", encoding="utf-8")
     f_co = open( folder + '/co.txt', mode="w", encoding="utf-8")
@@ -243,7 +247,9 @@ if __name__ == "__main__":
     co2 = 0.0
     co = 0.0
     o3 = 0.0
+    pm1_0 = 0.0
     pm2_5 = 0.0
+    pm10 = 0.0
     temp = 0.0
     humi = 0.0
 
@@ -290,8 +296,8 @@ if __name__ == "__main__":
                         continue                 
                     else:
                         if Debug: print('CO2:{} ug/m3'.format(co2))
-                        data_report['CO2(ug/m3)'] = co2
-                        writeFile(f_co2, readSensor_minute, 'CO2', co2, 'ug/m3', 'Good', DEVICE_ID)
+                        data_report['CO2(mg/m3)'] = co2
+                        writeFile(f_co2, readSensor_minute, 'CO2', co2, 'mg/m3', 'Good', DEVICE_ID)
                         state['co2'] = True
 
                 if UseCO and state['co'] == False:
@@ -317,22 +323,28 @@ if __name__ == "__main__":
                         state['o3'] = True
                 
                 if UsePM25 and state['pm25'] == False:
-                    pm2_5, ok = PM2_5.getSensor()
+                    pm1_0, pm2_5, pm10, ok = PM2_5.getSensor()
                     if not ok:
                         if Debug: print('Error read sensor: PM2.5')
                         continue     
                     else:
-                        if Debug: print('PM2.5:{} ug/m3'.format(pm2_5))
+                        if Debug: print('PM1.0:{} ug/m3     PM2.5:{} ug/m3      PM10:{} ug/m3'.format(pm1_0, pm2_5, pm10))
                         data_report['PM2.5(ug/m3)'] = pm2_5
+                        writeFile(f_pm1, readSensor_minute, 'PM1.0', pm1_0, 'ug/m3', 'Good', DEVICE_ID)
                         writeFile(f_pm25, readSensor_minute, 'PM2.5', pm2_5, 'ug/m3', 'Good', DEVICE_ID)
+                        writeFile(f_pm10, readSensor_minute, 'PM10', pm10, 'ug/m3', 'Good', DEVICE_ID)
                         state['pm25'] = True
                 
-                if UseDHT and state['dht'] == False:
-                    temp, humi, ok = DHT.getSensor()
-                    if not ok:
+                if UseHT and state['dht'] == False:
+                    # temp, humi, ok = DHT.getSensor()
+                    temp = sht.read_temp()
+                    humi = sht.read_humid()
+                    if temp == sht.ERROR or humi == sht.ERROR:
                         if Debug: print('Error read sensor: DHT')
                         continue
                     else:
+                        temp = round(temp, 1)
+                        humi = round(humi, 1)
                         if Debug: print('Temp:{} *C     Humi:{} %'.format(temp, humi))
                         data_report['Temperature(oC)'] = temp
                         data_report['Humidity(%)'] = humi
@@ -388,7 +400,7 @@ if __name__ == "__main__":
     if UseCO2:
         CO2.closeSensor()
         del CO2
-    if UseDHT:
+    if UseHT:
         DHT.closeSensor()
         del DHT
     if UseSim:

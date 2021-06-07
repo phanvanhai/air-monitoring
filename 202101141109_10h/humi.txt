@@ -1,0 +1,9 @@
+202101141110,Humidity,47.9,%,,Station1
+202101141111,Humidity,48.9,%,,Station1
+202101141112,Humidity,44.4,%,,Station1
+202101141113,Humidity,43.8,%,,Station1
+202101141114,Humidity,43.5,%,,Station1
+202101141115,Humidity,43.5,%,,Station1
+202101141116,Humidity,43.3,%,,Station1
+202101141117,Humidity,43.3,%,,Station1
+202101141118,Humidity,43.5,%,,Station1

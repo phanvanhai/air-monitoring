@@ -1,0 +1,9 @@
+202101141110,Temperature,18.2,oC,,Station1
+202101141111,Temperature,18.1,oC,,Station1
+202101141112,Temperature,18.1,oC,,Station1
+202101141113,Temperature,18.2,oC,,Station1
+202101141114,Temperature,18.2,oC,,Station1
+202101141115,Temperature,18.2,oC,,Station1
+202101141116,Temperature,18.2,oC,,Station1
+202101141117,Temperature,18.2,oC,,Station1
+202101141118,Temperature,18.2,oC,,Station1

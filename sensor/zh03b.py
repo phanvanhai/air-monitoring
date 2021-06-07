@@ -69,9 +69,11 @@ class sensor:
             i += 1
         
         if rec_buff == '':
+            print('buff null')
             return '', False
         
         if not self._validatePacket(rec_buff):
+            print('un validate')
             return '', False
         return rec_buff, True
 
@@ -119,14 +121,20 @@ class sensor:
             packet, ok = self._readPacket(timeout)
             if not ok:
                 return 0, False        
-            return self._caculatorGasValue(packet[12], packet[13]), True        
+            return  self._caculatorGasValue(packet[10], packet[11]), \
+                    self._caculatorGasValue(packet[12], packet[13]), \
+                    self._caculatorGasValue(packet[14], packet[15]), \
+                    True        
         else:
             if self.ser.write(self.REQUEST_COMMAND) < 0:
                 return 0, False
             packet, ok = self._readPacket(timeout)
             if not ok:
                 return 0, False
-            return self._caculatorGasValue(packet[2], packet[3]), True
+            return  self._caculatorGasValue(packet[6], packet[7]), \
+                    self._caculatorGasValue(packet[2], packet[3]), \
+                    self._caculatorGasValue(packet[4], packet[5]), \
+                    True
 
 # ---------------------------------------------------------------
 if __name__ == "__main__":
@@ -141,7 +149,7 @@ if __name__ == "__main__":
         next_reading = round(time.time()*1000)
         while main_is_run:
             # Read sensor        
-            gas, ok = sensor.getSensor()
+            _, gas, _, ok = sensor.getSensor()
             if not ok:
                 if Debug: print('Error read sensor')
             else:

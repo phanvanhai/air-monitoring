@@ -1,0 +1,10 @@
+202101141110,CO,0.6,ug/m3,Good,Station1
+202101141111,CO,0.6,ug/m3,Good,Station1
+202101141112,CO,0.6,ug/m3,Good,Station1
+202101141113,CO,0.6,ug/m3,Good,Station1
+202101141114,CO,0.6,ug/m3,Good,Station1
+202101141115,CO,0.6,ug/m3,Good,Station1
+202101141116,CO,0.6,ug/m3,Good,Station1
+202101141117,CO,0.6,ug/m3,Good,Station1
+202101141118,CO,0.6,ug/m3,Good,Station1
+202101141119,CO,0.6,ug/m3,Good,Station1

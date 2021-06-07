@@ -1,0 +1,10 @@
+202101141110,O3,265.7,ug/m3,Good,Station1
+202101141111,O3,450.0,ug/m3,Good,Station1
+202101141112,O3,42.9,ug/m3,Good,Station1
+202101141113,O3,42.9,ug/m3,Good,Station1
+202101141114,O3,42.9,ug/m3,Good,Station1
+202101141115,O3,42.9,ug/m3,Good,Station1
+202101141116,O3,42.9,ug/m3,Good,Station1
+202101141117,O3,42.9,ug/m3,Good,Station1
+202101141118,O3,42.9,ug/m3,Good,Station1
+202101141119,O3,42.9,ug/m3,Good,Station1
